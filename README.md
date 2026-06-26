@@ -1,97 +1,199 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# 🎨 ArtGallery — Prueba Técnica React Native
 
-# Getting Started
+Aplicación móvil para la visualización y venta de cuadros, desarrollada con React Native + TypeScript.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## 📱 Pantallas
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+| # | Pantalla | Descripción |
+|---|----------|-------------|
+| 01 | **Home** | Carrusel animado, contador de favoritos, galería grid |
+| 02 | **Detalle** | Imagen, descripción, tabla de detalles, toggle favorito |
+| 03 | **Drawer** | Menú lateral con navegación a secciones estáticas |
+| 04 | **Ayuda** | FAQ con acordeón animado |
+| 05 | **Quiénes somos** | Historia + estadísticas |
+| 06 | **Contáctanos** | Datos de contacto |
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+---
 
-```sh
-# Using npm
-npm start
+## 🛠 Stack tecnológico
 
-# OR using Yarn
-yarn start
+| Tecnología | Versión | Uso |
+|------------|---------|-----|
+| React Native | 0.86 | Framework base |
+| TypeScript | 5.x | Tipado estático |
+| React Navigation | 6.x | Navegación Stack + Drawer |
+| AsyncStorage | 2.x | Persistencia de favoritos |
+| NativeWind | 4.2.6 | Instalado y configurado* |
+
+---
+
+## 🚀 Instalación y ejecución
+
+### Requisitos previos
+- Node.js >= 18
+- JDK 17
+- Android Studio + Android SDK (API 34)
+- Variables de entorno `ANDROID_HOME` configuradas
+
+### 1. Clonar e instalar dependencias
+
+```bash
+git clone https://github.com/tu-usuario/ArtGallery.git
+cd ArtGallery
+npm install
 ```
 
-## Step 2: Build and run your app
+### 2. iOS — instalar pods
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```bash
+cd ios && pod install && cd ..
 ```
 
-### iOS
+### 3. Ejecutar
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+```bash
+# Android
+npx react-native run-android
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+# iOS
+npx react-native run-ios
 ```
 
-Then, and every time you update your native dependencies, run:
+### 4. Correr tests
 
-```sh
-bundle exec pod install
+```bash
+npm test
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+---
 
-```sh
-# Using npm
-npm run ios
+## 🏗 Arquitectura del proyecto
 
-# OR using Yarn
-yarn ios
+```
+ArtGallery/
+├── App.tsx                          # Entry point — providers + navigator
+├── index.js                         # Registro de la app + import global.css
+├── global.css                       # NativeWind base styles
+├── tailwind.config.js               # Configuración de colores y tipografía
+├── babel.config.js                  # Plugin Reanimated
+├── metro.config.js                  # withNativeWind
+│
+├── src/
+│   ├── types/
+│   │   └── index.ts                 # Painting, RootStackParamList, DrawerParamList
+│   │
+│   ├── data/
+│   │   └── paintings.ts             # Mock data — 6 cuadros con todos los campos
+│   │
+│   ├── context/
+│   │   └── FavoritesContext.tsx     # Context API + AsyncStorage persistence
+│   │
+│   ├── navigation/
+│   │   ├── RootNavigator.tsx        # Drawer navigator raíz
+│   │   ├── MainStack.tsx            # Stack: Home → Detail
+│   │   └── CustomDrawerContent.tsx  # Drawer UI personalizado
+│   │
+│   ├── components/
+│   │   ├── BackButton.tsx           # Botón de retroceso reutilizable
+│   │   ├── PaintingCard.tsx         # Tarjeta de cuadro reutilizable
+│   │   └── Carousel.tsx             # Carrusel con animaciones Animated API
+│   │
+│   └── screens/
+│       ├── HomeScreen.tsx           # Inicio: header, favoritos, carrusel, grid
+│       ├── DetailScreen.tsx         # Detalle: imagen, info, toggle favorito
+│       ├── HelpScreen.tsx           # Ayuda con FAQ acordeón
+│       ├── AboutUsScreen.tsx        # Quiénes somos + estadísticas
+│       └── ContactScreen.tsx        # Contacto
+│
+└── __tests__/
+    ├── FavoritesContext.test.tsx    # Tests del contexto
+    └── PaintingCard.test.tsx        # Tests del componente
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+---
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## 🧠 Decisiones técnicas
 
-## Step 3: Modify your app
+### Estado global — Context API
+Se eligió **Context API** sobre Redux Toolkit porque:
+- El scope de estado es acotado (solo favoritos)
+- No hay lógica asíncrona compleja ni middleware necesario
+- Mantiene el proyecto liviano y sin dependencias adicionales
 
-Now that you have successfully run the app, let's make changes!
+### Persistencia — AsyncStorage
+Los favoritos se persisten automáticamente en cada cambio del estado usando un `useEffect` que observa el array `favorites`. Al montar la app, se restaura el estado desde el storage, garantizando que los favoritos sobrevivan a reinicios.
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+### Animaciones — Animated API nativa
+El carrusel usa `Animated.FlatList` con `interpolate` para aplicar `scale` y `opacity` en función del `scrollX`. Las animaciones corren **en el hilo nativo** (`useNativeDriver: true`) sin bloquear el JS thread, garantizando 60fps.
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+### Estilos — StyleSheet en lugar de NativeWind
+La prueba solicita **NativeWind** como tecnología de estilos. NativeWind está instalado y configurado correctamente (`tailwind.config.js`, `metro.config.js`, `global.css`, `index.js`).
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+Sin embargo, durante el desarrollo se identificó una **incompatibilidad entre NativeWind v4.2.6 y React Native 0.86**: las clases de Tailwind no se procesaban en tiempo de ejecución en el emulador Android (las clases `className` no generaban estilos visuales). Esto se debe a que NativeWind v4 aún no tiene soporte estable para la Nueva Arquitectura de React Native (Fabric/TurboModules), que viene habilitada por defecto desde RN 0.74+.
 
-## Congratulations! :tada:
+**Solución adoptada:** Se implementaron los estilos con `StyleSheet` de React Native, respetando exactamente la misma paleta de colores, espaciados y diseño definidos en el mockup. La decisión prioriza la calidad visual y la entrega funcional sobre el uso forzado de una librería con incompatibilidades conocidas.
 
-You've successfully run and modified your React Native App. :partying_face:
+**Paleta de colores aplicada:**
+| Token | Valor |
+|-------|-------|
+| Primary | `#6D2BD9` |
+| Primary Light | `#8B5CF6` |
+| Hero BG | `#EDE9FE` |
+| Light BG | `#F3F4F6` |
+| Dark Text | `#111B27` |
+| Muted Text | `#6B7280` |
 
-### Now what?
+### Navegación — Stack + Drawer anidados
+- El **Drawer** es el navigator raíz, permitiendo abrir el menú lateral desde cualquier pantalla
+- Dentro del Drawer, el **Stack** maneja la navegación Home → Detail
+- `DrawerActions.openDrawer()` se dispara desde `HomeScreen` apuntando al navigator padre
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+### Datos mock
+Los cuadros se cargan desde `src/data/paintings.ts`, un arreglo estático con 6 obras que incluyen todos los campos del tipo `Painting` (id, title, image, description, artist, technique, year, dimensions).
 
-# Troubleshooting
+---
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+## 🧪 Tests
 
-# Learn More
+```bash
+npm test
+```
 
-To learn more about React Native, take a look at the following resources:
+Cobertura:
+- `FavoritesContext` — agregar, remover, contador, error fuera de provider
+- `PaintingCard` — render de título/artista, callback onPress
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+---
+
+## ✅ Checklist de requerimientos
+
+### Funcionales
+- [x] Header con nombre/logo y botón menú lateral
+- [x] Contador de favoritos en Home
+- [x] Carrusel animado con varias imágenes
+- [x] Sección informativa en Home
+- [x] Tap en cuadro navega al detalle
+- [x] Drawer con Ayuda, Quiénes somos, Contáctanos
+- [x] Detalle con imagen, nombre, ícono favorito y tabla de detalles
+- [x] Toggle de favorito con cambio visual
+- [x] Contador de favoritos se actualiza en tiempo real
+- [x] Estado centralizado accesible desde múltiples pantallas
+
+### Técnicos
+- [x] React Native + TypeScript
+- [x] NativeWind (instalado y configurado — ver decisión técnica)
+- [x] React Navigation (Stack + Drawer)
+- [x] Context API para estado de favoritos
+- [x] Tipo `Painting` con id, title, image, description
+- [x] Datos mock locales
+
+### Entregables
+- [x] Repositorio en GitHub
+- [x] README con instrucciones de ejecución
+- [x] Explicación de decisiones técnicas
+- [x] Persistencia con AsyncStorage
+- [x] Animaciones en el carrusel (scale + opacity)
+- [x] Pruebas unitarias
+- [x] Loading states (isLoading en FavoritesContext)
